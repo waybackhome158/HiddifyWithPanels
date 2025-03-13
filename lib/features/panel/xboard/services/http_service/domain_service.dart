@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 
 class DomainService {
   static const String ossDomain =
-      'https://storage.googleapis.com/oss-clarity/config.json';
+      'https://xn288999-1344810418.cos.ap-guangzhou.myqcloud.com/test.json';
 
 // 从返回的 JSON 中挑选一个可以正常访问的域名
   static Future<String> fetchValidDomain() async {
