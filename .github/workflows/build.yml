@@ -1,4 +1,4 @@
-name: Build
+name: SkyNest Build
 
 on:
   workflow_call:
@@ -19,65 +19,12 @@ env:
   FLUTTER_VERSION: '3.24.0'
   UPLOAD_ARTIFACT: "${{ inputs.upload-artifact }}"
   TAG_NAME: "${{ inputs.tag-name }}"
-  TARGET_NAME_apk: "Hiddify-Android"
-  TARGET_NAME_exe: "Hiddify-Windows-x64"
-  TARGET_NAME_dmg: "Hiddify-MacOS"
-  TARGET_NAME_pkg: "Hiddify-MacOS-Installer"
-  TARGET_NAME_ipa: "Hiddify-iOS"
-  TARGET_NAME_AppImage: "Hiddify-Linux-x64"
-  TARGET_NAME_deb: "Hiddify-Debian-x64"
-  TARGET_NAME_rpm: "Hiddify-rpm-x64"
+  TARGET_NAME_apk: "SkyNest-Android"
+  TARGET_NAME_exe: "SkyNest-Windows-x64"
+  TARGET_NAME_dmg: "SkyNest-MacOS"
+  TARGET_NAME_pkg: "SkyNest-MacOS-Installer"
 
 jobs:
-  build_linux:
-    permissions: write-all
-    runs-on: self-hosted
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2.16.0
-        with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
-          channel: 'stable'
-          cache: true
-
-      - name: Setup dependencies
-        run: make linux-install-dependencies
-
-      - name: Prepare for Linux
-        run: make linux-prepare
-
-      - name: Build Linux
-        env:
-          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
-        run: make linux-release
-
-      - name: Copy to out Linux
-        run: |
-          ls -R dist/
-          mkdir out
-          mkdir tmp_out
-          for EXT in AppImage deb rpm; do
-            KEY=TARGET_NAME_${EXT}
-            FILENAME=${!KEY}
-            echo "For $EXT ($KEY) filename is ${FILENAME}"
-            mv dist/*/*.$EXT tmp_out/${FILENAME}.$EXT
-            ls tmp_out
-            chmod +x tmp_out/${FILENAME}.$EXT
-            cp ./.github/help/linux/* tmp_out/
-            mv tmp_out/${FILENAME}.$EXT out/
-          done
-
-      - name: Upload Linux Artifact
-        if: env.UPLOAD_ARTIFACT == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: linux
-          path: ./out
-          retention-days: 1
-
   build_apk:
     permissions: write-all
     runs-on: ubuntu-latest
@@ -202,58 +149,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: macOS
-          path: ./out
-          retention-days: 1
-
-  build_ios:
-    permissions: write-all
-    runs-on: macos-12
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-  
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2.16.0
-        with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
-          channel: 'stable'
-          cache: true
-  
-      - name: Clean Flutter Build
-        run: |
-          flutter clean
-  
-      - name: Get Flutter Packages
-        run: |
-          flutter pub get
-  
-      - name: Reinstall iOS Dependencies
-        run: |
-          cd ios
-          rm -rf Pods Podfile.lock
-          pod install
-          
-      - name: Install tree
-        run: brew install tree
-
-      - name: Prepare for iOS
-        run: |
-          make ios-prepare
-          tree
-  
-      - name: Build iOS (No Code Sign)
-        run: |
-          flutter build ipa --no-codesign
-  
-      - name: Copy to out iOS
-        run: |
-          mkdir out
-          mv build/ios/ipa/*.ipa out/${TARGET_NAME_ipa}.ipa
-  
-      - name: Upload iOS Artifact
-        if: env.UPLOAD_ARTIFACT == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: iOS
           path: ./out
           retention-days: 1
